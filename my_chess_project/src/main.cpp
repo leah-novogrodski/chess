@@ -5,8 +5,7 @@
 int main() {
     try {
         // קריאה ווידוא מתוך קלט המערכת הסטנדרטי
-        std::vector<std::string> board = core::Board::parse(std::cin);
-        
+        std::vector<std::vector<std::string>> board = core::Board::parse(std::cin);
         // הדפסה חזרה ללא שום טקסט נוסף
         core::Board::print(board, std::cout);
         
