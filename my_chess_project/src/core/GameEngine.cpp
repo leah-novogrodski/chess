@@ -1,15 +1,14 @@
-#include "../../include/core/GameEngine.hpp"
+#include "GameEngine.hpp"
+#include "MovementValidator.hpp"
 
 namespace core {
     GameEngine::GameEngine(const Board& initialBoard) 
         : board(initialBoard), clockMs(0), hasSelection(false), selectedRow(-1), selectedCol(-1) {}
 
     void GameEngine::click(int x, int y) {
-        // המרת קואורדינטות פיקסלים לאינדקסים של הרשת (חלוקה בשלמים נותנת את ה-Floor)
         int col = x / CELL_SIZE;
         int row = y / CELL_SIZE;
 
-        // התעלמות מלחיצה מחוץ לגבולות
         if (row < 0 || row >= board.getRows() || col < 0 || col >= board.getCols()) {
             return;
         }
@@ -17,29 +16,27 @@ namespace core {
         std::string clickedPiece = board.getCell(row, col);
 
         if (!hasSelection) {
-            // לחיצה על תא ריק ללא בחירה - מתעלמים
             if (clickedPiece != ".") {
                 hasSelection = true;
                 selectedRow = row;
                 selectedCol = col;
             }
         } else {
-            // אם כבר יש כלי נבחר
             std::string selectedPiece = board.getCell(selectedRow, selectedCol);
-            
-            // לחיצה על אותו התא - אפשר להשאיר נבחר או להתעלם. נתעלם.
             if (row == selectedRow && col == selectedCol) return;
 
-            // אם לחצנו על כלי ידידותי (אותו צבע, דהיינו אות ראשונה זהה) - מחליפים בחירה
             if (clickedPiece != "." && clickedPiece[0] == selectedPiece[0]) {
                 selectedRow = row;
                 selectedCol = col;
             } 
-            // אחרת - לחיצה על תא ריק או אויב: שולחים בקשת תנועה (כרגע, מבצעים תנועה מיידית)
             else {
-                board.setCell(row, col, selectedPiece);
-                board.setCell(selectedRow, selectedCol, "."); // ריקון תא המקור
-                hasSelection = false; // איפוס בחירה
+                // שימוש בוולידטור החדש לפני ביצוע השינוי על הלוח
+                if (MovementValidator::isValidMove(board, selectedRow, selectedCol, row, col)) {
+                    board.setCell(row, col, selectedPiece);
+                    board.setCell(selectedRow, selectedCol, ".");
+                }
+                // ניקוי הבחירה (בין אם התנועה בוצעה או תוארה כלא חוקית וזכתה להתעלמות)
+                hasSelection = false;
             }
         }
     }
