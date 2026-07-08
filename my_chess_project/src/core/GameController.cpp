@@ -1,4 +1,4 @@
-#include "../../include/core/GameController.hpp"
+#include "include/core/GameController.hpp"
 #include <string>
 #include <sstream>
 

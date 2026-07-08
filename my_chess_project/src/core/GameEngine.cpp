@@ -30,12 +30,10 @@ namespace core {
                 selectedCol = col;
             } 
             else {
-                // שימוש בוולידטור החדש לפני ביצוע השינוי על הלוח
                 if (MovementValidator::isValidMove(board, selectedRow, selectedCol, row, col)) {
                     board.setCell(row, col, selectedPiece);
                     board.setCell(selectedRow, selectedCol, ".");
                 }
-                // ניקוי הבחירה (בין אם התנועה בוצעה או תוארה כלא חוקית וזכתה להתעלמות)
                 hasSelection = false;
             }
         }
