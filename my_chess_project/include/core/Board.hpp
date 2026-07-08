@@ -4,13 +4,18 @@
 #include <iostream>
 
 namespace core {
-    class Board {
+ class Board {
     public:
-        static std::vector<std::vector<std::string>> parse(std::istream& in);
-        
-        static void print(const std::vector<std::vector<std::string>>& board, std::ostream& out);
+        static Board parse(std::istream& in);    
+        void print(std::ostream& out) const;
+
+        int getRows() const;
+        int getCols() const;
+        std::string getCell(int row, int col) const;
+        void setCell(int row, int col, const std::string &value);
 
     private:
-        static bool isValidCell(const std::string& cell);
+        std::vector<std::vector<std::string>> grid;
+        static bool isValidCell(const std::string &cell);
     };
 }
