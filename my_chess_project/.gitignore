@@ -1,0 +1,61 @@
+# Build directories
+/build/
+/Build/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+
+# Visual Studio
+*.suo
+*.user
+*.vcxproj*
+*.vcproj*
+*.filters
+*.pdb
+.vs/
+
+# VS Code
+.vscode/
+
+# vcpkg and package manager artifacts
+vcpkg_installed/
+installed/
+buildtrees/
+downloads/
+packages/
+
+# Binaries and objects
+*.exe
+*.dll
+*.so
+*.dylib
+*.lib
+*.a
+*.obj
+*.o
+
+# Test binary outputs (usually generated in build/)
+/tests/**/*.exe
+/build/tests/**
+
+# Logs, coverage, temp files
+*.log
+coverage/
+*.gcda
+*.gcno
+
+# OS / editor files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+
+# Ignore generated documentation/build output
+doc/
+
+# Keep doctest single-header if intentionally added in repo (do not ignore tests/doctest.h)
+!tests/doctest.h
