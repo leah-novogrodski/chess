@@ -1,6 +1,6 @@
 
 #include "doctest.h"
-#include "../include/core/Board.hpp"
+#include "include/core/Board.hpp"
 #include <sstream>
 
 TEST_CASE("Board Parsing and Cell Validation") {

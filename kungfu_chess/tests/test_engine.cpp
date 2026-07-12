@@ -1,6 +1,6 @@
 // tests/test_engine.cpp
 #include "doctest.h"
-#include "../include/core/GameEngine.hpp"
+#include "include/core/GameEngine.hpp"
 #include <sstream>
 #include <Board.hpp>
 
