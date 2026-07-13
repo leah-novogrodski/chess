@@ -1,47 +1,88 @@
-cmake_minimum_required(VERSION 3.16)
-project(my_chess_project VERSION 0.1 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.20)
 
-set(CMAKE_CXX_STANDARD 17)
+project(kungfu_chess
+        VERSION 1.0
+        LANGUAGES CXX)
+
+
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/tests)
 
-# Collect project sources (exclude src/main.cpp from the test runner)
-file(GLOB_RECURSE PROJECT_SOURCES ${CMAKE_SOURCE_DIR}/src/*.cpp)
-set(MAIN_SRC ${CMAKE_SOURCE_DIR}/src/main.cpp)
-list(REMOVE_ITEM PROJECT_SOURCES ${MAIN_SRC})
+# =========================
+# Main application
+# =========================
 
-# Optional main executable if present
-if(EXISTS ${MAIN_SRC})
-	add_executable(my_chess ${MAIN_SRC})
-	target_include_directories(my_chess PRIVATE ${CMAKE_SOURCE_DIR}/include)
-endif()
+file(GLOB_RECURSE GAME_SOURCES
+        src/*.cpp
+)
 
-# Test runner: builds all source files (except main.cpp) plus tests/test_main.cpp
-add_executable(test_runner ${PROJECT_SOURCES} ${CMAKE_SOURCE_DIR}/tests/test_main.cpp)
-target_include_directories(test_runner PRIVATE ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/tests)
 
-# If doctest is installed as a package, link it. Otherwise the single-header in tests/ will be used.
-find_package(doctest CONFIG QUIET)
-if(doctest_FOUND)
-	target_link_libraries(test_runner PRIVATE doctest::doctest)
-endif()
+add_executable(kungfu_chess
+        ${GAME_SOURCES}
+)
+
+
+target_include_directories(kungfu_chess
+        PRIVATE
+        include
+)
+
+
+# =========================
+# Tests
+# =========================
 
 enable_testing()
-add_test(NAME unit_tests COMMAND test_runner)
 
-# Place build outputs in the same bin folder for convenience
-set_target_properties(test_runner PROPERTIES
-	RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/tests
-	RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/tests/Debug
-	RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/tests/Release
-	RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_BINARY_DIR}/tests/RelWithDebInfo
-	RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_BINARY_DIR}/tests/MinSizeRel
+
+file(GLOB_RECURSE TEST_SOURCES
+        tests/*.cpp
 )
-if(TARGET my_chess)
-	set_target_properties(my_chess PROPERTIES
-		RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin
-		RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/bin/Debug
-		RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/bin/Release
-	)
-endif()
+
+
+# לא להכניס main.cpp של המשחק לטסטים
+list(REMOVE_ITEM TEST_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+)
+
+
+add_executable(test_runner
+
+        ${TEST_SOURCES}
+
+        # קוד המקור של המשחק
+        src/model/board.cpp
+        src/model/game_state.cpp
+        src/model/piece.cpp
+        src/model/position.cpp
+
+        src/io/board_parser.cpp
+        src/io/board_printer.cpp
+
+        src/input/board_mapper.cpp
+        src/input/controller.cpp
+
+        src/engine/game_engine.cpp
+
+        src/rules/piece_rules.cpp
+        src/rules/rule_engine.cpp
+
+        src/realtime/motion.cpp
+        src/realtime/real_time_arbiter.cpp
+
+        src/view/image_view.cpp
+)
+
+
+target_include_directories(test_runner
+        PRIVATE
+        include
+        tests
+)
+
+
+add_test(
+        NAME chess_tests
+        COMMAND test_runner
+)
