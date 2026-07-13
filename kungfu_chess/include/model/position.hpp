@@ -6,11 +6,10 @@ struct Position {
     int row;
     int col;
 
-    Position() noexcept;
-    Position(int row, int col) noexcept;
+    Position() ;
+    Position(int row, int col);
 
-    bool operator==(Position const& other) const noexcept;
-    bool operator!=(Position const& other) const noexcept;
+    bool operator==(Position const& other) const;
+    bool operator!=(Position const& other) const ;
 };
 
-std::ostream& operator<<(std::ostream& os, Position const& position);
