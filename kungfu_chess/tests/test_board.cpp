@@ -1,46 +1,29 @@
-
 #include "doctest.h"
-#include "include/core/Board.hpp"
-#include <sstream>
+#include "model/board.hpp"
+#include "model/position.hpp"
+#include <memory>
+#include <stdexcept>
 
-TEST_CASE("Board Parsing and Cell Validation") {
-    SUBCASE("Valid custom VPL format board") {
-        std::istringstream input(
-            "Board:\n"
-            "wK . . bK\n"
-            ". . . .\n"
-            "wR . . bR\n"
-            "Commands:\n"
-            "print board\n"
-        );
-        auto board = core::Board::parse(input);
-        
-        CHECK(board.size() == 3); // 3 rows
-        CHECK(board[0].size() == 4); // 4 columns
-        CHECK(board[0][0] == "wK");
-        CHECK(board[0][1] == ".");
-        CHECK(board[2][3] == "bR");
-    }
+TEST_CASE("Board initialization and boundaries") {
+    Board board(8, 8);
 
-    SUBCASE("Invalid cell - wrong color") {
-        // 'x' is not a valid color (only 'w' or 'b')
-        std::istringstream input("xK . . bK\n");
-        CHECK_THROWS_AS(core::Board::parse(input), std::invalid_argument);
-    }
+    CHECK(board.is_valid_position(Position{0, 0}) == true);
+    CHECK(board.is_valid_position(Position{7, 7}) == true);
+    CHECK(board.is_valid_position(Position{8, 8}) == false);
+    CHECK(board.is_valid_position(Position{-1, 4}) == false);
+}
 
-    SUBCASE("Invalid cell - wrong piece type") {
-        // 'X' is not a valid piece
-        std::istringstream input("wX . . bK\n");
-        CHECK_THROWS_AS(core::Board::parse(input), std::invalid_argument);
-    }
+TEST_CASE("Board exception handling for empty positions") {
+    Board board(8, 8);
+    Position pos{3, 3};
 
-    SUBCASE("Invalid cell - too long") {
-        std::istringstream input("wK1 . . bK\n");
-        CHECK_THROWS_AS(core::Board::parse(input), std::invalid_argument);
-    }
+    CHECK(board.is_empty(pos) == true);
+    CHECK_THROWS_AS(board.remove_piece(pos), std::logic_error);
+}
 
-    SUBCASE("Invalid board - mismatched row lengths") {
-        std::istringstream input("wK . . bK\n. .\n"); 
-        CHECK_THROWS_AS(core::Board::parse(input), std::invalid_argument);
-    }
+TEST_CASE("Board out of bounds exceptions") {
+    Board board(8, 8);
+    Position out_of_bounds{10, 10};
+
+    CHECK_THROWS_AS(board.is_empty(out_of_bounds), std::out_of_range);
 }
