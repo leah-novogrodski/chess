@@ -10,12 +10,12 @@ namespace chess
     Piece::Piece(PieceId id, Color color, Type type, Position square, State state) noexcept
         : id(id), color(color), type(type), square(square), state(state) {}
 
-    bool Piece::operator==(Piece const &other) const noexcept
+    bool Piece::operator==(Piece const &other) const
     {
         return id == other.id && color == other.color && type == other.type && square == other.square && state == other.state;
     }
 
-    bool Piece::operator!=(Piece const &other) const noexcept
+    bool Piece::operator!=(Piece const &other) const
     {
         return !(*this == other);
     }
@@ -23,12 +23,12 @@ namespace chess
     namespace
     {
 
-        const char *toString(Color color) noexcept
+        const char *toString(Color color) 
         {
             return (color == Color::White) ? "White" : "Black";
         }
 
-        const char *toString(Type type) noexcept
+        const char *toString(Type type) 
         {
             switch (type)
             {
@@ -48,7 +48,7 @@ namespace chess
             return "Unknown";
         }
 
-        const char *toString(State state) noexcept
+        const char *toString(State state) 
         {
             switch (state)
             {
@@ -69,7 +69,6 @@ namespace chess
         return os << "Piece{id=" << piece.id
                   << ", color=" << toString(piece.color)
                   << ", type=" << toString(piece.type)
-                  << ", square=" << piece.square
                   << ", state=" << toString(piece.state)
                   << "}";
     }

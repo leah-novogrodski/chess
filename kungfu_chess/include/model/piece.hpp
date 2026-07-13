@@ -1,4 +1,4 @@
-#pragma once
+
 
 #include "position.hpp"
 #include <iosfwd>
@@ -37,8 +37,8 @@ struct Piece {
     Piece() noexcept;
     Piece(PieceId id, Color color, Type type, Position square, State state = State::Idle) noexcept;
 
-    bool operator==(Piece const& other) const noexcept;
-    bool operator!=(Piece const& other) const noexcept;
+    bool operator==(Piece const& other) const;
+    bool operator!=(Piece const& other) const;
 };
 
 std::ostream& operator<<(std::ostream& os, Piece const& piece);
