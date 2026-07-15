@@ -8,6 +8,5 @@
 class BoardPrinter {
 public:
     static std::unique_ptr<BoardPrinter> create();
-
-    void print(std::ostream& output, const std::vector<std::vector<std::string>>& board) const;
+    void print(const Board& board) const;
 };

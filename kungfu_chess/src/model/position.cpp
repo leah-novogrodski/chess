@@ -1,4 +1,4 @@
-#include "position.hpp"
+#include "model/position.hpp"
 
 #include <ostream>
 

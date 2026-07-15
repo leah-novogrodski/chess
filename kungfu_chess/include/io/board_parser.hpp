@@ -6,18 +6,14 @@
 #include <unordered_set>
 #include <memory>
 #include <optional>
+#include "model/board.hpp"
 
 class BoardParser {
 public:
-    static std::unique_ptr<BoardParser> create(const std::unordered_set<std::string>& validTokens);
-
-    explicit BoardParser(const std::unordered_set<std::string>& validTokens);
-
-    std::vector<std::vector<std::string>> parse(std::istream& input) const;
+    Board readBoard(std::istream &in) const;
 
 private:
-    std::unordered_set<std::string> m_validTokens;
-
     bool isValidToken(const std::string& token) const;
     std::vector<std::string> parseRow(const std::string& line) const;
+    Board readBoard(std::istream &in);
 };

@@ -1,14 +1,43 @@
-#include "piece.hpp"
+#include "model/piece.hpp"
 
 #include <ostream>
+#include <unordered_map>
+namespace
+{
+    const std::unordered_map<char, chess::Type> pieceTypes{
+        {'K', chess::Type::King},
+        {'Q', chess::Type::Queen},
+        {'R', chess::Type::Rook},
+        {'B', chess::Type::Bishop},
+        {'N', chess::Type::Knight},
+        {'P', chess::Type::Pawn}};
+}
 
 namespace chess
 {
 
-    Piece::Piece() noexcept = default;
-
-    Piece::Piece(PieceId id, Color color, Type type, Position square, State state) noexcept
+    Piece::Piece(PieceId id, Color color, Type type, Position square, State state)
         : id(id), color(color), type(type), square(square), state(state) {}
+
+    Type Piece::typeFromChar(char c)
+    {
+        c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+
+        auto it = pieceTypes.find(c);
+        if (it == pieceTypes.end())
+        {
+            throw std::runtime_error("Unknown piece type");
+        }
+
+        return it->second;
+    }
+
+    Color Piece::colorFromChar(char c)
+    {
+        return std::isupper(static_cast<unsigned char>(c))
+                   ? Color::White
+                   : Color::Black;
+    }
 
     bool Piece::operator==(Piece const &other) const
     {
@@ -23,12 +52,12 @@ namespace chess
     namespace
     {
 
-        const char *toString(Color color) 
+        const char *toString(Color color)
         {
             return (color == Color::White) ? "White" : "Black";
         }
 
-        const char *toString(Type type) 
+        const char *toString(Type type)
         {
             switch (type)
             {
@@ -48,7 +77,7 @@ namespace chess
             return "Unknown";
         }
 
-        const char *toString(State state) 
+        const char *toString(State state)
         {
             switch (state)
             {

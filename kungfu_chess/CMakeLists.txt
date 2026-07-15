@@ -1,88 +1,41 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.14)
+project(kungfu_chess CXX)
 
-project(kungfu_chess
-        VERSION 1.0
-        LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# הוספת תיקיית השורש לנתיבי החיפוש
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+cmake_minimum_required(VERSION 3.14)
+project(kungfu_chess CXX)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+# הגדרת תקן C++ (מומלץ להשתמש ב-17 ומעלה עבור פרויקטים מודרניים)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+# הוספת תיקיית ה-include כדי שהקומפיילר ימצא את קובצי ה-.hpp
+include_directories(include)
 
-# =========================
-# Main application
-# =========================
+# איסוף כל קובצי המקור מתיקיית src
+file(GLOB_RECURSE APP_SOURCES "src/*.cpp")
 
-file(GLOB_RECURSE GAME_SOURCES
-        src/*.cpp
-)
+# הסרת main.cpp מהרשימה כדי שנוכל להשתמש בשאר הקבצים גם עבור הבדיקות
+list(REMOVE_ITEM APP_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 
+# --- בניית התוכנית הראשית ---
+add_executable(kungfu_chess src/main.cpp ${APP_SOURCES})
 
-add_executable(kungfu_chess
-        ${GAME_SOURCES}
-)
-
-
-target_include_directories(kungfu_chess
-        PRIVATE
-        include
-)
-
-
-# =========================
-# Tests
-# =========================
-
+# --- בניית מערך הבדיקות (Doctest) ---
 enable_testing()
 
+# איסוף קובצי הבדיקות
+file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
 
-file(GLOB_RECURSE TEST_SOURCES
-        tests/*.cpp
-)
+# יצירת קובץ הרצה נפרד לבדיקות
+add_executable(test_runner ${TEST_SOURCES} ${APP_SOURCES})
 
+# הוספת תיקיית tests כדי למצוא את doctest.h
+target_include_directories(test_runner PRIVATE tests)
 
-# לא להכניס main.cpp של המשחק לטסטים
-list(REMOVE_ITEM TEST_SOURCES
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
-)
-
-
-add_executable(test_runner
-
-        ${TEST_SOURCES}
-
-        # קוד המקור של המשחק
-        src/model/board.cpp
-        src/model/game_state.cpp
-        src/model/piece.cpp
-        src/model/position.cpp
-
-        src/io/board_parser.cpp
-        src/io/board_printer.cpp
-
-        src/input/board_mapper.cpp
-        src/input/controller.cpp
-
-        src/engine/game_engine.cpp
-
-        src/rules/piece_rules.cpp
-        src/rules/rule_engine.cpp
-
-        src/realtime/motion.cpp
-        src/realtime/real_time_arbiter.cpp
-
-        src/view/image_view.cpp
-)
-
-
-target_include_directories(test_runner
-        PRIVATE
-        include
-        tests
-)
-
-
-add_test(
-        NAME chess_tests
-        COMMAND test_runner
-)
+# רישום הבדיקה במערכת CTest
+add_test(NAME run_doctest COMMAND test_runner)

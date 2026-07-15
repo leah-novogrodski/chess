@@ -1,74 +1,55 @@
-#include "io/board_parser.hpp"
+#include <iostream>
 #include <sstream>
-#include <stdexcept>
+#include <set>
+#include "model/board_parser.hpp"
 
-std::unique_ptr<BoardParser> BoardParser::create(const std::unordered_set<std::string>& validTokens) {
-    return std::make_unique<BoardParser>(validTokens);
+bool isValidToken(const std::string &token)
+{
+    static std::set<std::string> valid =
+        {
+            ".",
+            "wK", "bK",
+            "wQ", "bQ",
+            "wR", "bR",
+            "wB", "bB",
+            "wN", "bN",
+            "wP", "bP"};
+
+    return valid.count(token);
 }
 
-BoardParser::BoardParser(const std::unordered_set<std::string>& validTokens)
-    : m_validTokens(validTokens) {
-}
+Board BoardParser::readBoard(std::istream &in)
+{
+    int width;
+    int height;
 
-bool BoardParser::isValidToken(const std::string& token) const {
-    return m_validTokens.find(token) != m_validTokens.end();
-}
+    in >> width >> height;
 
-std::vector<std::string> BoardParser::parseRow(const std::string& line) const {
-    std::vector<std::string> rowTokens;
-    std::stringstream stream(line);
-    std::string token;
+    Board board(width, height);
 
-    while (stream >> token) {
-        if (!isValidToken(token)) {
-            throw std::invalid_argument("Invalid token detected: " + token);
-        }
-        rowTokens.push_back(token);
-    }
+    chess::PieceId nextId = 0;
 
-    return rowTokens;
-}
+    for (int row = 0; row < height; ++row)
+    {
+        for (int col = 0; col < width; ++col)
+        {
+            char symbol;
+            in >> symbol;
 
-std::vector<std::vector<std::string>> BoardParser::parse(std::istream& input) const {
-    std::vector<std::vector<std::string>> parsedBoard;
-    std::string line;
-    bool isBoardSection = false;
-    std::optional<size_t> boardWidth = std::nullopt;
-
-    while (std::getline(input, line)) {
-        if (line == "Board:") {
-            isBoardSection = true;
-            continue;
-        }
-
-        if (line == "Commands:") {
-            break;
-        }
-
-        if (isBoardSection) {
-            if (line.empty()) {
+            if (symbol == '.')
+            {
                 continue;
             }
 
-            std::vector<std::string> rowTokens = parseRow(line);
-            
-            if (rowTokens.empty()) {
-                continue;
-            }
+            auto piece = std::make_shared<chess::Piece>(
+                nextId++,
+                chess::Piece::colorFromChar(symbol),
+                chess::Piece::typeFromChar(symbol),
+                Position{col, row});
 
-            if (!boardWidth.has_value()) {
-                boardWidth = rowTokens.size();
-            } else if (boardWidth.value() != rowTokens.size()) {
-                throw std::length_error("Row width mismatch detected");
-            }
-
-            parsedBoard.push_back(rowTokens);
+            board.add_piece(Position{col, row}, *piece);
         }
     }
 
-    if (parsedBoard.empty()) {
-        throw std::runtime_error("Empty board structure provided");
-    }
-
-    return parsedBoard;
+    return board;
 }
