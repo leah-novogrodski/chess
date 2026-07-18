@@ -78,19 +78,14 @@ ArrivalEvent RealTimeArbiter::advanceTime(long elapsedMs, Board& board) {
 
                     event.pieceArrived = true;
                 }
-                // else: friendly-blocked - event.pieceArrived stays false,
-                // board unchanged, and activeJump_ (if any) is left untouched.
             }
         }
 
         activeMove_.reset();
     }
 
-    // Step B: separately, resolve the jump's own timeout - only reached here
-    // if it wasn't already concluded by interception in Step A above (in
-    // which case activeJump_ is already reset and this is a no-op).
     if (activeJump_ && elapsedMs >= activeJump_->startMs + JUMP_DURATION_MS) {
-        activeJump_.reset();   // lands normally: zero board change
+        activeJump_.reset();   
     }
 
     return event;

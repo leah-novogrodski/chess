@@ -19,7 +19,6 @@ struct GameState
     Board board;
     long elapsedMs = 0;
     Selection selection;
-    RealTimeArbiter arbiter; // RealTimeArbiter owns the active-motion state;
-                             // GameState merely holds an instance of it.
+    RealTimeArbiter arbiter;
     bool gameOver = false;
 };
