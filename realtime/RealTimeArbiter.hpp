@@ -9,6 +9,7 @@
 #include "../model/PieceMove.hpp"
 #include "../model/Position.hpp"
 
+
 class RealTimeArbiterError : public std::runtime_error {
 public:
     explicit RealTimeArbiterError(const std::string& code)
@@ -20,7 +21,7 @@ private:
 
 struct ArrivalEvent {
     bool pieceArrived = false;
-    std::optional<Piece> capturedPiece;   
+    std::optional<Piece> capturedPiece;
 };
 
 class RealTimeArbiter {
@@ -30,9 +31,11 @@ public:
     ArrivalEvent advanceTime(long elapsedMs, Board& board);
 
     bool hasActiveJump() const;
-    bool isPieceCurrentlyMoving(Position pos) const;   
-    bool isPieceCurrentlyJumping(Position pos) const;  
-    void startJump(Position cell, long startMs);      
+    bool isPieceCurrentlyMoving(Position pos) const;
+    bool isPieceCurrentlyJumping(Position pos) const;
+    void startJump(Position cell, long startMs);
+
+    std::optional<PieceMove> activeMotionForPiece(Position sourceCell) const;
 
 private:
     struct PieceJump {

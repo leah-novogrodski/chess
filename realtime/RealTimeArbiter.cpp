@@ -78,15 +78,22 @@ ArrivalEvent RealTimeArbiter::advanceTime(long elapsedMs, Board& board) {
 
                     event.pieceArrived = true;
                 }
+             
             }
         }
 
         activeMove_.reset();
     }
-
     if (activeJump_ && elapsedMs >= activeJump_->startMs + JUMP_DURATION_MS) {
-        activeJump_.reset();   
+        activeJump_.reset();   // lands normally: zero board change
     }
 
     return event;
+}
+
+std::optional<PieceMove> RealTimeArbiter::activeMotionForPiece(Position sourceCell) const {
+    if (activeMove_.has_value() && activeMove_->from == sourceCell) {
+        return activeMove_;
+    }
+    return std::nullopt;
 }
