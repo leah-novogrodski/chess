@@ -56,7 +56,6 @@ add_executable(sprite_demo
     sprite_demo.cpp
     view/img.cpp
     view/SpriteLoader.cpp
-    view/GameSnapshope.cpp
     view/renderer.cpp
     io/BoardParser.cpp
     model/Board.cpp
@@ -64,6 +63,7 @@ add_executable(sprite_demo
     model/Position.cpp
     realtime/RealTimeArbiter.cpp
     rules/PieceRules.cpp
+    engine/GameEngine.cpp
 )
 target_include_directories(sprite_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/view)
 configure_opencv(sprite_demo)

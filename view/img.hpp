@@ -50,9 +50,7 @@ public:
      */
     void show();
     
-    /**
-     * Get the underlying OpenCV Mat
-     */
+   
     const cv::Mat& get_mat() const { return img; }
     
     /**

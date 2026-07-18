@@ -24,7 +24,6 @@ static std::filesystem::path resolveImagePath(const std::string& path) {
 }
 
 Img::Img() {
-    // Constructor - img is automatically initialized as empty
 }
 
 Img& Img::read(const std::string& path,
@@ -37,7 +36,7 @@ Img& Img::read(const std::string& path,
         throw std::runtime_error("Cannot load image: " + resolvedPath.string());
     }
 
-    if (size.first != 0 && size.second != 0) {  // Check if size is not empty
+    if (size.first != 0 && size.second != 0) {  
         int target_w = size.first;
         int target_h = size.second;
         int h = img.rows;

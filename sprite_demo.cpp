@@ -1,28 +1,33 @@
-#include "view/SpriteLoader.hpp"
 
 #include <iostream>
-#include <stdexcept>
 #include "../view/renderer.hpp"
-#include "../view/GameSnapshot.hpp"
+#include "../engine/GameEngine.hpp"
 #include "../io/BoardParser.hpp"
-
+#include "../io/BoardFormat.hpp"
 
 
 int main() {
     try {
-        GameState st;
-        st.board = parseBoard({
-            "bR bN bB bQ bK bB bN bR",
-            "bP bP bP bP bP bP bP bP",
-            ". . . . . . . .",
-            ". . . . . . . .",
-            ". . . . . . . .",
-            ". . . . . . . .",
-            "wP wP wP wP wP wP wP wP",
-            "wR wN wB wQ wK wB wN wR"
-        });
+        const std::string boardText =
+            io_format::SECTION_BOARD + "\n"
+            "bR bN bB bQ bK bB bN bR\n"
+            "bP bP bP bP bP bP bP bP\n"
+            ". . . . . . . .\n"
+            ". . . . . . . .\n"
+            ". . . . . . . .\n"
+            ". . . . . . . .\n"
+            "wP wP wP wP wP wP wP wP\n"
+            "wR wN wB wQ wK wB wN wR\n" +
+            io_format::SECTION_COMMANDS + "\n";
 
-        GameSnapshot snapshot = buildSnapshot(st);
+        Sections sections = parseSections(boardText);
+
+        GameState st;
+        st.board = parseBoard(sections.boardLines);
+        st.selection.active = true;
+        st.selection.cell = {7, 3};
+
+        GameSnapshot snapshot = GameEngine::snapshot(st);
         Img frame = renderFrame(snapshot);
         frame.show();
 

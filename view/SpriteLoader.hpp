@@ -6,11 +6,13 @@
 
 
 namespace SpriteLoader {
-std::string pieceCodeFromPiece(Color color, Kind kind);
 
-extern const std::string PIECES_ROOT;
+    inline const std::string PIECES_ROOT = "assets/pieces_classic/";
 
-Img loadPieceIdleSprite(const std::string& pieceCode);
-Img loadPieceIdleSprite(const std::string& pieceCode, const std::string& state);
+    Img loadPieceIdleSprite(const std::string& pieceCode);
 
-}  // namespace SpriteLoader
+    std::string pieceCodeFromPiece(Color color, Kind kind);
+
+    Img& getCachedPieceSprite(const std::string& pieceCode, const std::string& state);
+
+}
