@@ -64,6 +64,8 @@ add_executable(sprite_demo
     realtime/RealTimeArbiter.cpp
     rules/PieceRules.cpp
     engine/GameEngine.cpp
+rules/RuleEngine.cpp
+    engine/GameSnapshot.cpp
 )
 target_include_directories(sprite_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/view)
 configure_opencv(sprite_demo)
