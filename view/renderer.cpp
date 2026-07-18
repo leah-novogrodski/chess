@@ -4,26 +4,29 @@
 #include "../rules/Config.hpp"
 #include "../rules/Config.hpp"
 
+namespace
+{
+    const cv::Scalar SELECTION_HIGHLIGHT_COLOR(0, 0, 255, 255);
+    const cv::Scalar GAME_OVER_TEXT_COLOR(0, 255, 255, 255);      // bright yellow, BGRA
+    const cv::Scalar GAME_OVER_BACKGROUND_COLOR(20, 20, 20, 255); // near-black, BGRA
 
-namespace {
-    const cv::Scalar SELECTION_HIGHLIGHT_COLOR(0, 0, 255, 255);   // bright red, BGRA
 }
 
-void drawPiece(Img& canvas, const PieceSnapshot& piece) {
-    Img& sprite = SpriteLoader::getCachedPieceSprite(piece.pieceCode, piece.animState);
+void drawPiece(Img &canvas, const PieceSnapshot &piece)
+{
+    Img &sprite = SpriteLoader::getCachedPieceSprite(piece.pieceCode, piece.animState);
     sprite.draw_on(canvas, piece.pixelX, piece.pixelY);
 }
 
-void drawSelection(Img& canvas, const std::optional<Position>& selectedCell) {
-    if (!selectedCell) return;
+void drawSelection(Img &canvas, const std::optional<Position> &selectedCell)
+{
+    if (!selectedCell)
+        return;
 
     int x = selectedCell->col * config::CELL_SIZE;
     int y = selectedCell->row * config::CELL_SIZE;
     const int thickness = 4;
 
-    // Four thin opaque strips along the cell's edges, drawn via Img's
-    // existing create()+draw_on() - no fill, so the piece underneath (if
-    // any) stays fully visible.
     Img top, bottom, left, right;
     top.create(config::CELL_SIZE, thickness, SELECTION_HIGHLIGHT_COLOR);
     bottom.create(config::CELL_SIZE, thickness, SELECTION_HIGHLIGHT_COLOR);
@@ -36,20 +39,50 @@ void drawSelection(Img& canvas, const std::optional<Position>& selectedCell) {
     right.draw_on(canvas, x + config::CELL_SIZE - thickness, y);
 }
 
-Img renderFrame(const GameSnapshot& snapshot) {
-    int width  = snapshot.cols * config::CELL_SIZE;
+Img renderFrame(const GameSnapshot &snapshot)
+{
+    int width = snapshot.cols * config::CELL_SIZE;
     int height = snapshot.rows * config::CELL_SIZE;
 
     Img canvas;
     canvas.read("assets/board.png", {width, height}, false);
 
-    for (const PieceSnapshot& piece : snapshot.pieces) {
+    for (const PieceSnapshot &piece : snapshot.pieces)
+    {
         drawPiece(canvas, piece);
     }
 
     drawSelection(canvas, snapshot.selectedCell);
-
-    // TODO: game-over message is a separate later step.
+    if (snapshot.gameOver)
+    {
+        drawGameOver(canvas, width, height);
+    }
 
     return canvas;
+}
+
+void drawGameOver(Img &canvas, int canvasWidth, int canvasHeight)
+{
+    const std::string text = "GAME OVER";
+    const double fontScale = 1.8;
+    const int thickness = 3;
+
+    int baseline = 0;
+    cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
+
+    int textX = (canvasWidth - textSize.width) / 2;
+    int textY = (canvasHeight + textSize.height) / 2; // put_text's y is the text baseline
+
+    const int paddingX = 24;
+    const int paddingY = 16;
+    int boxWidth = textSize.width + 2 * paddingX;
+    int boxHeight = textSize.height + baseline + 2 * paddingY;
+    int boxX = (canvasWidth - boxWidth) / 2;
+    int boxY = textY - textSize.height - paddingY;
+
+    Img background;
+    background.create(boxWidth, boxHeight, GAME_OVER_BACKGROUND_COLOR);
+    background.draw_on(canvas, boxX, boxY);
+
+    canvas.put_text(text, textX, textY, fontScale, GAME_OVER_TEXT_COLOR, thickness);
 }
