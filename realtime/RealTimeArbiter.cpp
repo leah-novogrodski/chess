@@ -85,7 +85,7 @@ ArrivalEvent RealTimeArbiter::advanceTime(long elapsedMs, Board& board) {
         activeMove_.reset();
     }
     if (activeJump_ && elapsedMs >= activeJump_->startMs + JUMP_DURATION_MS) {
-        activeJump_.reset();   // lands normally: zero board change
+        activeJump_.reset();   
     }
 
     return event;
