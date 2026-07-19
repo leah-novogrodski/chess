@@ -169,7 +169,18 @@ endif()
 add_executable(ws_echo_server network/ws_echo_server.cpp)
 add_executable(ws_echo_client network/ws_echo_client.cpp)
 
-foreach(ws_target ws_echo_server ws_echo_client)
+add_executable(protocol_demo_server
+    network/protocol_demo_server.cpp
+    network/protocol/JsonCodec.cpp
+)
+add_executable(protocol_demo_client
+    network/protocol_demo_client.cpp
+    network/protocol/JsonCodec.cpp
+)
+target_include_directories(protocol_demo_server PRIVATE ${NLOHMANN_JSON_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(protocol_demo_client PRIVATE ${NLOHMANN_JSON_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+
+foreach(ws_target ws_echo_server ws_echo_client protocol_demo_server protocol_demo_client)
     target_include_directories(${ws_target} PRIVATE ${WEBSOCKETPP_INCLUDE_DIR} ${ASIO_INCLUDE_DIR})
     target_compile_definitions(${ws_target} PRIVATE
         ASIO_STANDALONE             # standalone (non-Boost) Asio mode
