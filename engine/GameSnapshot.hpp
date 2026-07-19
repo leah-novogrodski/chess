@@ -10,6 +10,7 @@ struct PieceSnapshot {
     std::string pieceCode;
     int pixelX, pixelY;
     std::string animState;
+    int frameIndex;      
 };
 
 struct GameSnapshot {
@@ -18,3 +19,7 @@ struct GameSnapshot {
     std::optional<Position> selectedCell;
     bool gameOver;
 };
+
+namespace GameEngine {
+    int computeAnimationFrameIndex(long phaseMs, int framesPerSec, int frameCount, bool isLoop);
+}

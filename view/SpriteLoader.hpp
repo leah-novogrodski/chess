@@ -4,15 +4,17 @@
 #include <string>
 #include "../model/Piece.hpp"
 
-
-namespace SpriteLoader {
+namespace SpriteLoader
+{
 
     inline const std::string PIECES_ROOT = "assets/pieces_classic/";
 
-    Img loadPieceIdleSprite(const std::string& pieceCode);
+    Img loadPieceIdleSprite(const std::string &pieceCode);
 
     std::string pieceCodeFromPiece(Color color, Kind kind);
 
-    Img& getCachedPieceSprite(const std::string& pieceCode, const std::string& state);
+    Img &getCachedPieceSprite(const std::string &pieceCode, const std::string &state);
+
+    Img &getCachedPieceFrame(const std::string &pieceCode, const std::string &state, int frameIndex);
 
 }
