@@ -7,6 +7,7 @@
 #include <optional>
 #include <chrono>
 #include <thread>
+#include <cctype>
 #include "SnapshotAdapter.hpp"
 #include "protocol/JsonCodec.hpp"
 #include "../view/renderer.hpp"
