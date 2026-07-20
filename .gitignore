@@ -33,3 +33,5 @@ view/OpenCV_451/
 
 # Build files
 build/
+
+third_party/
