@@ -22,7 +22,7 @@ typedef websocketpp::connection_hdl connection_hdl;
 
 namespace {
     const uint16_t PORT = 9004;
-    const char* ROOM_ID = "global";          // single global game - real room ids are a later step
+    const char* ROOM_ID = "global";          
     const char* USERS_DB_PATH = "chess_users.db";
 
     GameState buildInitialState() {
@@ -45,13 +45,10 @@ namespace {
         return state;
     }
 
-    // Server-side-only bookkeeping: which connections have authenticated,
-    // as whom, and what role they've been assigned. Deliberately NOT part
-    // of GameState/model - this is a network-layer concern, not game state.
     struct ConnectionInfo {
         bool loggedIn = false;
-        std::string username;
-        std::string role;   // "white" | "black" | "spectator", set once loggedIn
+        std::string email;
+        std::string role;   
     };
 }
 
@@ -89,7 +86,7 @@ int main() {
         game_server.set_close_handler([&](connection_hdl hdl) {
             auto it = connectionInfos.find(hdl);
             std::string who = (it != connectionInfos.end() && it->second.loggedIn)
-                ? it->second.username : "(not logged in)";
+                ? it->second.email : "(not logged in)";
             std::cout << "Connection closed (was: " << who << ")" << std::endl;
             connectionInfos.erase(hdl);
         });
@@ -109,8 +106,8 @@ int main() {
                 nlohmann::json parsed = nlohmann::json::parse(rawText);
                 protocol::LoginMessage login = parsed.at("payload").get<protocol::LoginMessage>();
 
-                // Never log the password - only the username and the outcome.
-                std::cout << "Login attempt for username: " << login.username << std::endl;
+                // Never log the password - only the email and the outcome.
+                std::cout << "Login attempt for email: " << login.username << std::endl;
 
                 LoginResult result = loginUser(userDb, login.username, login.password);
 
@@ -125,7 +122,7 @@ int main() {
                 sendTo(hdl, "login_result", resultPayload);
 
                 if (!result.success) {
-                    std::cout << "Login failed for username: " << login.username
+                    std::cout << "Login failed for email: " << login.username
                               << ", reason: " << result.reason << std::endl;
                     return;
                 }
@@ -140,14 +137,14 @@ int main() {
                 }
 
                 connectionInfos[hdl].loggedIn = true;
-                connectionInfos[hdl].username = login.username;
+                connectionInfos[hdl].email = login.username;
                 connectionInfos[hdl].role = role;
 
                 protocol::RoomJoinedMessage joined{ROOM_ID, role};
                 nlohmann::json joinedPayload = joined;
                 sendTo(hdl, "room_joined", joinedPayload);
 
-                std::cout << "Login succeeded for username: " << login.username
+                std::cout << "Login succeeded for email: " << login.username
                           << ", assigned role: " << role << std::endl;
             } else if (type == "click") {
                 auto it = connectionInfos.find(hdl);
@@ -176,11 +173,6 @@ int main() {
         auto previousTime = std::chrono::steady_clock::now();
 
         while (true) {
-            // TODO(S-future): single-threaded poll()-based loop is fine for
-            // one global game with a handful of connections; real
-            // concurrency/scaling across many simultaneous games is
-            // deferred, per the instructor's own note that multi-user
-            // scaling is future work. No threads or mutexes introduced here.
             game_server.poll();
 
             auto now = std::chrono::steady_clock::now();
@@ -195,10 +187,7 @@ int main() {
             nlohmann::json envelope = protocol::wrapEnvelope("snapshot", payload);
             std::string rawText = envelope.dump();
 
-            // Only broadcast to connections that have actually logged in -
-            // an unauthenticated connection hasn't opened its render window
-            // yet either (see game_client.cpp), so there's nothing for it
-            // to do with a snapshot, and no reason to hand it game state.
+           
             for (const auto& entry : connectionInfos) {
                 if (!entry.second.loggedIn) continue;
 
@@ -208,6 +197,7 @@ int main() {
                     std::cerr << "Broadcast send failed: " << ec.message() << std::endl;
                 }
             }
+
             std::this_thread::sleep_for(std::chrono::milliseconds(30));
         }
     } catch (websocketpp::exception const& e) {

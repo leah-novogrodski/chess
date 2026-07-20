@@ -32,11 +32,11 @@ namespace {
         return digest;
     }
 
-    bool userExists(Database& db, const std::string& username) {
+    bool userExists(Database& db, const std::string& email) {
         const char* sql = "SELECT 1 FROM users WHERE email = ?;";
         sqlite3_stmt* stmt = nullptr;
         sqlite3_prepare_v2(db.handle(), sql, -1, &stmt, nullptr);
-        sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 1, email.c_str(), -1, SQLITE_TRANSIENT);
 
         bool found = sqlite3_step(stmt) == SQLITE_ROW;
         sqlite3_finalize(stmt);

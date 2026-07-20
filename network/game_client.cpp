@@ -39,10 +39,10 @@ namespace {
 }
 
 int main() {
-    std::string username;
+    std::string email;
     std::string password;
-    std::cout << "Username: ";
-    std::getline(std::cin, username);
+    std::cout << "Email: ";
+    std::getline(std::cin, email);
     std::cout << "Password: ";
     std::getline(std::cin, password);
 
@@ -73,7 +73,7 @@ int main() {
             ctx.connected = true;
             std::cout << "Connected to game_server. Logging in..." << std::endl;
 
-            protocol::LoginMessage login{username, password};
+            protocol::LoginMessage login{email, password};
             nlohmann::json payload = login;
             nlohmann::json envelope = protocol::wrapEnvelope("login", payload);
             c.send(hdl, envelope.dump(), websocketpp::frame::opcode::text);

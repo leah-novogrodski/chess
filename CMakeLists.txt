@@ -224,7 +224,6 @@ add_executable(protocol_demo_client
     network/protocol/JsonCodec.cpp
 )
 target_include_directories(protocol_demo_server PRIVATE ${NLOHMANN_JSON_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
-target_include_directories(protocol_demo_client PRIVATE ${NLOHMANN_JSON_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 
 add_executable(game_server
