@@ -27,3 +27,9 @@ Testing/
 
 # OS
 Thumbs.db
+
+# OpenCV binaries
+view/OpenCV_451/
+
+# Build files
+build/
