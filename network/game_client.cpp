@@ -19,6 +19,13 @@ namespace {
     const std::string URI = "ws://localhost:9004";
     const std::string WINDOW_NAME = "Kung Fu Chess (networked)";
 
+    std::string trim(const std::string& v) {
+        size_t a = 0, b = v.size();
+        while (a < b && std::isspace((unsigned char)v[a])) ++a;
+        while (b > a && std::isspace((unsigned char)v[b - 1])) --b;
+        return v.substr(a, b - a);
+    }
+
     struct ClientContext {
         client* c = nullptr;
         connection_hdl hdl;
@@ -40,13 +47,6 @@ namespace {
 }
 
 int main() {
-    std::string email;
-    std::string password;
-    std::cout << "Email: ";
-    std::getline(std::cin, email);
-    std::cout << "Password: ";
-    std::getline(std::cin, password);
-
     client c;
     ClientContext ctx;
     ctx.c = &c;
@@ -58,6 +58,10 @@ int main() {
     bool loginSucceeded = false;
     std::string loginFailureReason;
     int loginRating = 0;
+
+    bool registerResultReceived = false;
+    bool registerSucceeded = false;
+    std::string registerFailureReason;
 
     bool roomJoinedReceived = false;
     std::string myRole;
@@ -72,12 +76,7 @@ int main() {
         c.set_open_handler([&](connection_hdl hdl) {
             ctx.hdl = hdl;
             ctx.connected = true;
-            std::cout << "Connected to game_server. Logging in..." << std::endl;
-
-            protocol::LoginMessage login{email, password};
-            nlohmann::json payload = login;
-            nlohmann::json envelope = protocol::wrapEnvelope("login", payload);
-            c.send(hdl, envelope.dump(), websocketpp::frame::opcode::text);
+            std::cout << "Connected to game_server." << std::endl;
         });
 
         c.set_message_handler([&](connection_hdl, client::message_ptr msg) {
@@ -102,6 +101,11 @@ int main() {
                 } else if (!result.success && result.reason.has_value()) {
                     loginFailureReason = result.reason.value();
                 }
+            } else if (type == "register_result") {
+                protocol::RegisterResultMessage result = parsed.at("payload").get<protocol::RegisterResultMessage>();
+                registerResultReceived = true;
+                registerSucceeded = result.success;
+                registerFailureReason = result.reason;
             } else if (type == "room_joined") {
                 protocol::RoomJoinedMessage joined = parsed.at("payload").get<protocol::RoomJoinedMessage>();
                 roomJoinedReceived = true;
@@ -131,6 +135,63 @@ int main() {
         }
 
         c.connect(con);
+
+        while (!ctx.connected) {
+            c.poll();
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+
+        std::string email;
+        std::string password;
+
+        while (true) {
+            std::cout << "Login or Register? (l/r): ";
+            std::string choiceLine;
+            std::getline(std::cin, choiceLine);
+            choiceLine = trim(choiceLine);
+            char choice = choiceLine.empty() ? 'l' : (char)std::tolower((unsigned char)choiceLine[0]);
+
+            if (choice != 'r') {
+                break;
+            }
+
+            std::cout << "Email: ";
+            std::getline(std::cin, email);
+            email = trim(email);
+            std::cout << "Password: ";
+            std::getline(std::cin, password);
+            password = trim(password);
+
+            registerResultReceived = false;
+            protocol::RegisterMessage reg{email, password};
+            nlohmann::json regPayload = reg;
+            nlohmann::json regEnvelope = protocol::wrapEnvelope("register", regPayload);
+            c.send(ctx.hdl, regEnvelope.dump(), websocketpp::frame::opcode::text);
+
+            while (!registerResultReceived) {
+                c.poll();
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
+
+            if (registerSucceeded) {
+                std::cout << "Registration succeeded." << std::endl;
+            } else {
+                std::cout << "Registration failed: " << registerFailureReason << std::endl;
+            }
+        }
+
+        std::cout << "Email: ";
+        std::getline(std::cin, email);
+        email = trim(email);
+        std::cout << "Password: ";
+        std::getline(std::cin, password);
+        password = trim(password);
+
+        std::cout << "Logging in..." << std::endl;
+        protocol::LoginMessage login{email, password};
+        nlohmann::json payload = login;
+        nlohmann::json envelope = protocol::wrapEnvelope("login", payload);
+        c.send(ctx.hdl, envelope.dump(), websocketpp::frame::opcode::text);
 
         while (!loginResultReceived) {
             c.poll();

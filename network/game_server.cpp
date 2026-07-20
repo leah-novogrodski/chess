@@ -48,7 +48,7 @@ namespace {
     struct ConnectionInfo {
         bool loggedIn = false;
         std::string email;
-        std::string role;   
+        std::string role;   // "white" | "black" | "spectator", set once loggedIn
     };
 
     Color colorFromRole(const std::string& role) {
@@ -106,10 +106,31 @@ int main() {
                 return;
             }
 
-            if (type == "login") {
+            if (type == "register") {
+                nlohmann::json parsed = nlohmann::json::parse(rawText);
+                protocol::RegisterMessage reg = parsed.at("payload").get<protocol::RegisterMessage>();
+
+                // Never log the password - only the email and the outcome.
+                std::cout << "Register attempt for email: " << reg.email << std::endl;
+
+                RegisterResult result = registerUser(userDb,reg.username, reg.email, reg.password);
+
+                protocol::RegisterResultMessage resultMsg{result.success, result.reason};
+                nlohmann::json resultPayload = resultMsg;
+                sendTo(hdl, "register_result", resultPayload);
+
+                if (result.success) {
+                    std::cout << "Register succeeded for email: " << reg.email << std::endl;
+                } else {
+                    std::cout << "Register failed for email: " << reg.email
+                              << ", reason: " << result.reason << std::endl;
+                }
+
+            } else if (type == "login") {
                 nlohmann::json parsed = nlohmann::json::parse(rawText);
                 protocol::LoginMessage login = parsed.at("payload").get<protocol::LoginMessage>();
 
+                // Never log the password - only the email and the outcome.
                 std::cout << "Login attempt for email: " << login.username << std::endl;
 
                 LoginResult result = loginUser(userDb, login.username, login.password);
@@ -162,7 +183,6 @@ int main() {
                 nlohmann::json parsed = nlohmann::json::parse(rawText);
                 protocol::ClickMessage click = parsed.at("payload").get<protocol::ClickMessage>();
 
-               
                 Controller::click(state, click.x, click.y, colorFromRole(it->second.role));
             } else {
                 std::cout << "unhandled type: " << type << std::endl;
@@ -177,7 +197,6 @@ int main() {
         auto previousTime = std::chrono::steady_clock::now();
 
         while (true) {
-
             game_server.poll();
 
             auto now = std::chrono::steady_clock::now();
