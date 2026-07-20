@@ -2,7 +2,7 @@
 
 #include "SpriteLoader.hpp"
 #include "../rules/Config.hpp"
-#include "../rules/Config.hpp"
+
 
 namespace
 {

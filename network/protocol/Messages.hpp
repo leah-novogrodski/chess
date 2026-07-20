@@ -1,11 +1,12 @@
 
+#pragma once
+
 #include <optional>
 #include <string>
 #include <vector>
 
 namespace protocol {
 
-// --- Client -> Server -------------------------------------------------
 
 struct LoginMessage {
     std::string username;
@@ -33,7 +34,6 @@ struct LeaveMessage {
     // empty payload
 };
 
-// --- Server -> Client ---------------------------------------------------
 
 struct LoginResultMessage {
     bool success;
@@ -52,10 +52,7 @@ struct MatchmakingResultMessage {
     std::optional<std::string> reason;   // set when success == false
 };
 
-// Mirrors engine/GameSnapshot.hpp's PieceSnapshot field-for-field. Kept as
-// its own type here rather than reusing PieceSnapshot directly, so
-// network/protocol/ has no dependency on engine/ - connecting the two is
-// deferred to the step that actually serializes a real GameSnapshot.
+
 struct SnapshotPieceMessage {
     std::string pieceCode;
     int pixelX;
@@ -69,7 +66,6 @@ struct SnapshotCell {
     int col;
 };
 
-// Mirrors engine/GameSnapshot.hpp's GameSnapshot field-for-field.
 struct SnapshotMessage {
     int rows;
     int cols;
