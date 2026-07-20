@@ -5,10 +5,11 @@
 
 #include <iostream>
 #include <optional>
-
+#include <chrono>
+#include <thread>
 #include "SnapshotAdapter.hpp"
 #include "protocol/JsonCodec.hpp"
-#include "view/Renderer.hpp"
+#include "../view/renderer.hpp"
 
 typedef websocketpp::client<websocketpp::config::asio_client> client;
 typedef websocketpp::connection_hdl connection_hdl;
@@ -38,12 +39,28 @@ namespace {
 }
 
 int main() {
+    std::string username;
+    std::string password;
+    std::cout << "Username: ";
+    std::getline(std::cin, username);
+    std::cout << "Password: ";
+    std::getline(std::cin, password);
+
     client c;
     ClientContext ctx;
     ctx.c = &c;
 
     std::optional<GameSnapshot> latestSnapshot;
     bool hasNewSnapshot = false;
+
+    bool loginResultReceived = false;
+    bool loginSucceeded = false;
+    std::string loginFailureReason;
+    int loginRating = 0;
+
+    bool roomJoinedReceived = false;
+    std::string myRole;
+    std::string myRoomId;
 
     try {
         c.set_access_channels(websocketpp::log::alevel::none);
@@ -54,7 +71,12 @@ int main() {
         c.set_open_handler([&](connection_hdl hdl) {
             ctx.hdl = hdl;
             ctx.connected = true;
-            std::cout << "Connected to game_server." << std::endl;
+            std::cout << "Connected to game_server. Logging in..." << std::endl;
+
+            protocol::LoginMessage login{username, password};
+            nlohmann::json payload = login;
+            nlohmann::json envelope = protocol::wrapEnvelope("login", payload);
+            c.send(hdl, envelope.dump(), websocketpp::frame::opcode::text);
         });
 
         c.set_message_handler([&](connection_hdl, client::message_ptr msg) {
@@ -70,13 +92,27 @@ int main() {
 
             nlohmann::json parsed = nlohmann::json::parse(rawText);
 
-            if (type == "room_joined") {
+            if (type == "login_result") {
+                protocol::LoginResultMessage result = parsed.at("payload").get<protocol::LoginResultMessage>();
+                loginResultReceived = true;
+                loginSucceeded = result.success;
+                if (result.success && result.rating.has_value()) {
+                    loginRating = result.rating.value();
+                } else if (!result.success && result.reason.has_value()) {
+                    loginFailureReason = result.reason.value();
+                }
+            } else if (type == "room_joined") {
                 protocol::RoomJoinedMessage joined = parsed.at("payload").get<protocol::RoomJoinedMessage>();
-                std::cout << "Assigned role: " << joined.role << " (room " << joined.room_id << ")" << std::endl;
+                roomJoinedReceived = true;
+                myRole = joined.role;
+                myRoomId = joined.room_id;
             } else if (type == "snapshot") {
                 protocol::SnapshotMessage snapMsg = parsed.at("payload").get<protocol::SnapshotMessage>();
                 latestSnapshot = SnapshotAdapter::fromProtocol(snapMsg);
                 hasNewSnapshot = true;
+            } else if (type == "error") {
+                protocol::ErrorMessage err = parsed.at("payload").get<protocol::ErrorMessage>();
+                std::cout << "Server error: " << err.message << std::endl;
             } else {
                 std::cout << "unhandled type: " << type << std::endl;
             }
@@ -94,6 +130,28 @@ int main() {
         }
 
         c.connect(con);
+
+        while (!loginResultReceived) {
+            c.poll();
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+
+        if (!loginSucceeded) {
+            std::cout << "Login failed: " << loginFailureReason << std::endl;
+            if (ctx.connected) {
+                c.close(ctx.hdl, websocketpp::close::status::normal, "login failed");
+                c.poll();
+            }
+            return 1;
+        }
+
+        std::cout << "Login succeeded. Rating: " << loginRating << std::endl;
+
+        while (!roomJoinedReceived) {
+            c.poll();
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        std::cout << "Assigned role: " << myRole << " (room " << myRoomId << ")" << std::endl;
 
         cv::namedWindow(WINDOW_NAME);
         cv::setMouseCallback(WINDOW_NAME, onMouse, static_cast<void*>(&ctx));

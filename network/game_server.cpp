@@ -13,14 +13,17 @@
 #include "../io/BoardFormat.hpp"
 #include "../io/BoardParser.hpp"
 #include "SnapshotAdapter.hpp"
-#include "protocol/JsonCodec.hpp"
+#include "../persistence/Database.hpp"
+#include "../persistence/UserRepository.hpp"
+#include "./protocol/JsonCodec.hpp"
 
 typedef websocketpp::server<websocketpp::config::asio> server;
 typedef websocketpp::connection_hdl connection_hdl;
 
 namespace {
     const uint16_t PORT = 9004;
-    const char* ROOM_ID = "global";   // single global game - real room ids are a later step
+    const char* ROOM_ID = "global";          // single global game - real room ids are a later step
+    const char* USERS_DB_PATH = "chess_users.db";
 
     GameState buildInitialState() {
         const std::string boardText =
@@ -41,14 +44,36 @@ namespace {
         state.board = parseBoard(sections.boardLines);
         return state;
     }
+
+    // Server-side-only bookkeeping: which connections have authenticated,
+    // as whom, and what role they've been assigned. Deliberately NOT part
+    // of GameState/model - this is a network-layer concern, not game state.
+    struct ConnectionInfo {
+        bool loggedIn = false;
+        std::string username;
+        std::string role;   // "white" | "black" | "spectator", set once loggedIn
+    };
 }
 
 int main() {
     server game_server;
     GameState state = buildInitialState();
+    Database userDb(USERS_DB_PATH);
 
-    std::set<connection_hdl, std::owner_less<connection_hdl>> connections;
-    std::map<connection_hdl, std::string, std::owner_less<connection_hdl>> roles;
+    std::map<connection_hdl, ConnectionInfo, std::owner_less<connection_hdl>> connectionInfos;
+
+    auto countLoggedIn = [&]() {
+        int count = 0;
+        for (const auto& entry : connectionInfos) {
+            if (entry.second.loggedIn) ++count;
+        }
+        return count;
+    };
+
+    auto sendTo = [&](connection_hdl hdl, const std::string& typeName, const nlohmann::json& payload) {
+        nlohmann::json envelope = protocol::wrapEnvelope(typeName, payload);
+        game_server.send(hdl, envelope.dump(), websocketpp::frame::opcode::text);
+    };
 
     try {
         game_server.set_access_channels(websocketpp::log::alevel::none);
@@ -57,37 +82,19 @@ int main() {
         game_server.init_asio();
 
         game_server.set_open_handler([&](connection_hdl hdl) {
-            std::string role;
-            if (connections.empty()) {
-                role = "white";
-            } else if (connections.size() == 1) {
-                role = "black";
-            } else {
-                role = "spectator";
-                // TODO(S-future): S8 handles real spectator support (e.g.
-                // read-only enforcement, late-join snapshot catch-up); for
-                // now a third+ connection is just tracked so it keeps
-                // receiving broadcasts, nothing else is special about it.
-            }
-
-            connections.insert(hdl);
-            roles[hdl] = role;
-
-            protocol::RoomJoinedMessage joined{ROOM_ID, role};
-            nlohmann::json payload = joined;
-            nlohmann::json envelope = protocol::wrapEnvelope("room_joined", payload);
-            game_server.send(hdl, envelope.dump(), websocketpp::frame::opcode::text);
-
-            std::cout << "Connection joined as: " << role << std::endl;
+            connectionInfos[hdl] = ConnectionInfo{};
+            std::cout << "Connection opened, awaiting login." << std::endl;
         });
 
         game_server.set_close_handler([&](connection_hdl hdl) {
-            std::cout << "Connection closed (was: " << roles[hdl] << ")" << std::endl;
-            connections.erase(hdl);
-            roles.erase(hdl);
+            auto it = connectionInfos.find(hdl);
+            std::string who = (it != connectionInfos.end() && it->second.loggedIn)
+                ? it->second.username : "(not logged in)";
+            std::cout << "Connection closed (was: " << who << ")" << std::endl;
+            connectionInfos.erase(hdl);
         });
 
-        game_server.set_message_handler([&](connection_hdl /*hdl*/, server::message_ptr msg) {
+        game_server.set_message_handler([&](connection_hdl hdl, server::message_ptr msg) {
             const std::string rawText = msg->get_payload();
 
             std::string type;
@@ -98,14 +105,63 @@ int main() {
                 return;
             }
 
-            if (type == "click") {
+            if (type == "login") {
+                nlohmann::json parsed = nlohmann::json::parse(rawText);
+                protocol::LoginMessage login = parsed.at("payload").get<protocol::LoginMessage>();
+
+                // Never log the password - only the username and the outcome.
+                std::cout << "Login attempt for username: " << login.username << std::endl;
+
+                LoginResult result = loginUser(userDb, login.username, login.password);
+
+                protocol::LoginResultMessage resultMsg;
+                resultMsg.success = result.success;
+                if (result.success) {
+                    resultMsg.rating = result.rating;
+                } else {
+                    resultMsg.reason = result.reason;
+                }
+                nlohmann::json resultPayload = resultMsg;
+                sendTo(hdl, "login_result", resultPayload);
+
+                if (!result.success) {
+                    std::cout << "Login failed for username: " << login.username
+                              << ", reason: " << result.reason << std::endl;
+                    return;
+                }
+
+                std::string role;
+                if (countLoggedIn() == 0) {
+                    role = "white";
+                } else if (countLoggedIn() == 1) {
+                    role = "black";
+                } else {
+                    role = "spectator";
+                }
+
+                connectionInfos[hdl].loggedIn = true;
+                connectionInfos[hdl].username = login.username;
+                connectionInfos[hdl].role = role;
+
+                protocol::RoomJoinedMessage joined{ROOM_ID, role};
+                nlohmann::json joinedPayload = joined;
+                sendTo(hdl, "room_joined", joinedPayload);
+
+                std::cout << "Login succeeded for username: " << login.username
+                          << ", assigned role: " << role << std::endl;
+            } else if (type == "click") {
+                auto it = connectionInfos.find(hdl);
+                if (it == connectionInfos.end() || !it->second.loggedIn) {
+                    std::cout << "Rejecting click from a connection that hasn't logged in yet." << std::endl;
+                    protocol::ErrorMessage err{"You must log in before sending clicks."};
+                    nlohmann::json errPayload = err;
+                    sendTo(hdl, "error", errPayload);
+                    return;
+                }
+
                 nlohmann::json parsed = nlohmann::json::parse(rawText);
                 protocol::ClickMessage click = parsed.at("payload").get<protocol::ClickMessage>();
 
-                // TODO(S-future): enforce that the "white" connection can
-                // only move white pieces (and likewise for "black") - not
-                // enforced yet, every connection's click is passed straight
-                // through to Controller::click as-is.
                 Controller::click(state, click.x, click.y);
             } else {
                 std::cout << "unhandled type: " << type << std::endl;
@@ -139,18 +195,19 @@ int main() {
             nlohmann::json envelope = protocol::wrapEnvelope("snapshot", payload);
             std::string rawText = envelope.dump();
 
-            for (const connection_hdl& hdl : connections) {
+            // Only broadcast to connections that have actually logged in -
+            // an unauthenticated connection hasn't opened its render window
+            // yet either (see game_client.cpp), so there's nothing for it
+            // to do with a snapshot, and no reason to hand it game state.
+            for (const auto& entry : connectionInfos) {
+                if (!entry.second.loggedIn) continue;
+
                 websocketpp::lib::error_code ec;
-                game_server.send(hdl, rawText, websocketpp::frame::opcode::text, ec);
+                game_server.send(entry.first, rawText, websocketpp::frame::opcode::text, ec);
                 if (ec) {
                     std::cerr << "Broadcast send failed: " << ec.message() << std::endl;
                 }
             }
-
-            // Not part of the task's literal spec, added so this
-            // non-blocking poll() loop doesn't pin a CPU core at 100% and
-            // flood the network with thousands of identical snapshots per
-            // second; ~33 snapshots/sec is plenty for this step.
             std::this_thread::sleep_for(std::chrono::milliseconds(30));
         }
     } catch (websocketpp::exception const& e) {

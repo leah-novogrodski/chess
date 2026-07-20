@@ -65,10 +65,7 @@ function(configure_opencv target)
     endif()
 endfunction()
 
-set(NLOHMANN_JSON_INCLUDE_DIR
-    ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/single_include/nlohmann)
-
-set(NLOHMANN_JSON_INCLUDE_DIR ${nlohmann_json_SOURCE_DIR}/single_include/nlohmann)
+set(NLOHMANN_JSON_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/single_include)
 
 if(POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
@@ -124,7 +121,7 @@ endfunction()
 function(copy_assets target_name)
     add_custom_command(TARGET ${target_name} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/frontend/assets"
+            "${CMAKE_CURRENT_SOURCE_DIR}/assets"
             "$<TARGET_FILE_DIR:${target_name}>/assets"
     )
 endfunction()
@@ -209,7 +206,14 @@ if(BUILD_TESTS)
 endif()
 
 add_executable(ws_echo_server network/ws_echo_server.cpp)
+target_include_directories(ws_echo_server PRIVATE ${WEBSOCKETPP_INCLUDE_DIR} ${ASIO_INCLUDE_DIR})
+target_compile_definitions(ws_echo_server PRIVATE ASIO_STANDALONE _WEBSOCKETPP_CPP11_STL_ _WEBSOCKETPP_CPP11_THREAD_ _WIN32_WINNT=0x0601)
+target_link_libraries(ws_echo_server PRIVATE ws2_32 wsock32 mswsock)
+
 add_executable(ws_echo_client network/ws_echo_client.cpp)
+target_include_directories(ws_echo_client PRIVATE ${WEBSOCKETPP_INCLUDE_DIR} ${ASIO_INCLUDE_DIR})
+target_compile_definitions(ws_echo_client PRIVATE ASIO_STANDALONE _WEBSOCKETPP_CPP11_STL_ _WEBSOCKETPP_CPP11_THREAD_ _WIN32_WINNT=0x0601)
+target_link_libraries(ws_echo_client PRIVATE ws2_32 wsock32 mswsock)
 
 add_executable(protocol_demo_server
     network/protocol_demo_server.cpp
@@ -237,8 +241,11 @@ add_executable(game_server
     io/BoardParser.cpp
     engine/GameSnapshot.cpp
     engine/GameEngine.cpp
+    persistence/Database.cpp
+    persistence/UserRepository.cpp
+    ${SQLITE3_SOURCE_DIR}/sqlite3.c
 )
-target_include_directories(game_server PRIVATE ${WEBSOCKETPP_INCLUDE_DIR} ${ASIO_INCLUDE_DIR} ${NLOHMANN_JSON_INCLUDE_DIR})
+target_include_directories(game_server PRIVATE ${WEBSOCKETPP_INCLUDE_DIR} ${ASIO_INCLUDE_DIR} ${NLOHMANN_JSON_INCLUDE_DIR} ${SQLITE3_SOURCE_DIR} ${PICOSHA2_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(game_client
     network/game_client.cpp
@@ -287,3 +294,5 @@ add_executable(persistence_demo
      ${SQLITE3_SOURCE_DIR}/sqlite3.c
 )
 target_include_directories(persistence_demo PRIVATE  ${SQLITE3_SOURCE_DIR} ${PICOSHA2_INCLUDE_DIR})
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
