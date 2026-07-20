@@ -35,6 +35,18 @@ Authenticate a user before any room/matchmaking action.
 ```json
 {"type": "login", "payload": {"username": "alice", "password": "hunter2"}}
 ```
+### `register`
+Create a new account with the given email/password. Does not log the new
+account in - a separate `login` message is still required afterward.
+
+| field      | type   |
+|------------|--------|
+| `email`    | string |
+| `password` | string |
+
+```json
+{"type": "register", "payload": {"email": "alice@example.com", "password": "hunter2"}}
+```
 
 ### `create_room`
 Create a new named room and join it as its first player (white).

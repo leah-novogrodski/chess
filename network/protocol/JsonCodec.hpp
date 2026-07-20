@@ -12,6 +12,9 @@ namespace protocol {
 void to_json(nlohmann::json& j, const LoginMessage& m);
 void from_json(const nlohmann::json& j, LoginMessage& m);
 
+void to_json(nlohmann::json& j, const RegisterMessage& m);
+void from_json(const nlohmann::json& j, RegisterMessage& m);
+
 void to_json(nlohmann::json& j, const CreateRoomMessage& m);
 void from_json(const nlohmann::json& j, CreateRoomMessage& m);
 
@@ -32,6 +35,9 @@ void from_json(const nlohmann::json& j, LeaveMessage& m);
 
 void to_json(nlohmann::json& j, const LoginResultMessage& m);
 void from_json(const nlohmann::json& j, LoginResultMessage& m);
+
+void to_json(nlohmann::json& j, const RegisterResultMessage& m);
+void from_json(const nlohmann::json& j, RegisterResultMessage& m);
 
 void to_json(nlohmann::json& j, const RoomJoinedMessage& m);
 void from_json(const nlohmann::json& j, RoomJoinedMessage& m);
@@ -56,6 +62,8 @@ void from_json(const nlohmann::json& j, GameOverResultMessage& m);
 
 void to_json(nlohmann::json& j, const ErrorMessage& m);
 void from_json(const nlohmann::json& j, ErrorMessage& m);
+
+
 
 
 nlohmann::json wrapEnvelope(const std::string& typeName, const nlohmann::json& payload);

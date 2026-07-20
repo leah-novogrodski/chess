@@ -13,6 +13,11 @@ struct LoginMessage {
     std::string password;
 };
 
+struct RegisterMessage {
+    std::string username;
+    std::string email;
+    std::string password;
+};
 struct CreateRoomMessage {
     std::string room_name;
 };
@@ -37,19 +42,24 @@ struct LeaveMessage {
 
 struct LoginResultMessage {
     bool success;
-    std::optional<std::string> reason;   // set when success == false
-    std::optional<int> rating;           // set when success == true
+    std::optional<std::string> reason;
+    std::optional<int> rating;
+};
+
+struct RegisterResultMessage {
+    bool success;
+    std::string reason;
 };
 
 struct RoomJoinedMessage {
     std::string room_id;
-    std::string role;   // "white" | "black" | "spectator"
+    std::string role;   
 };
 
 struct MatchmakingResultMessage {
     bool success;
-    std::optional<std::string> room_id;  // set when success == true
-    std::optional<std::string> reason;   // set when success == false
+    std::optional<std::string> room_id;  
+    std::optional<std::string> reason;   
 };
 
 

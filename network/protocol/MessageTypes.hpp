@@ -11,6 +11,7 @@ namespace protocol {
 enum class MessageType {
     // Client -> Server
     Login,
+    Register,
     CreateRoom,
     JoinRoom,
     QuickPlay,
@@ -19,6 +20,7 @@ enum class MessageType {
 
     // Server -> Client
     LoginResult,
+    RegisterResult,
     RoomJoined,
     MatchmakingResult,
     Snapshot,
