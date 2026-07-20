@@ -6,12 +6,24 @@
 #include "BoardMapper.hpp"
 #include "../engine/GameEngine.hpp"
 
-namespace Controller {
+namespace Controller
+{
 
-    void click(GameState& st, int x, int y) {
+    void click(GameState &st, int x, int y, Color playerColor)
+    {
+        if (st.selection.active)
+        {
+            std::optional<Piece> owner = st.board.pieceAt(st.selection.cell);
+            if (!owner || owner->color != playerColor)
+            {
+                return;
+            }
+        }
         auto cell = pixelToCell(x, y, st.board);
-        if (!cell) {
-            if (st.selection.active) st.selection = Selection{};
+        if (!cell)
+        {
+            if (st.selection.active)
+                st.selection = Selection{};
             return;
         }
 
@@ -20,28 +32,36 @@ namespace Controller {
 
         std::optional<Piece> clicked = st.board.pieceAt(*cell);
 
-        if (st.selection.active) {
+        if (st.selection.active)
+        {
             std::optional<Piece> selected = st.board.pieceAt(st.selection.cell);
             bool sameSide = clicked && selected && clicked->color == selected->color;
-            if (sameSide) {
-                st.selection = {true, {row, col}, st.elapsedMs};   // reselect
-            } else {
-                sendMove(st, row, col);                            // complete: move or capture
+            if (sameSide)
+            {
+                st.selection = {true, {row, col}, st.elapsedMs};
+            }
+            else
+            {
+                sendMove(st, row, col);
             }
             return;
         }
 
-        if (clicked) {
-            st.selection = {true, {row, col}, st.elapsedMs};       // open a fresh selection
+        if (clicked && clicked->color == playerColor)
+        {
+            st.selection = {true, {row, col}, st.elapsedMs};
         }
     }
 
-    void jump(GameState& st, int x, int y) {
+    void jump(GameState &st, int x, int y)
+    {
         auto cell = pixelToCell(x, y, st.board);
-        if (!cell) return;
+        if (!cell)
+            return;
 
         std::optional<Piece> piece = st.board.pieceAt(*cell);
-        if (!piece) return;
+        if (!piece)
+            return;
 
         startJump(st, *cell);
     }

@@ -22,7 +22,7 @@ typedef websocketpp::connection_hdl connection_hdl;
 
 namespace {
     const uint16_t PORT = 9004;
-    const char* ROOM_ID = "global";          
+    const char* ROOM_ID = "global";
     const char* USERS_DB_PATH = "chess_users.db";
 
     GameState buildInitialState() {
@@ -50,6 +50,10 @@ namespace {
         std::string email;
         std::string role;   
     };
+
+    Color colorFromRole(const std::string& role) {
+        return (role == "white") ? Color::White : Color::Black;
+    }
 }
 
 int main() {
@@ -106,7 +110,6 @@ int main() {
                 nlohmann::json parsed = nlohmann::json::parse(rawText);
                 protocol::LoginMessage login = parsed.at("payload").get<protocol::LoginMessage>();
 
-                // Never log the password - only the email and the outcome.
                 std::cout << "Login attempt for email: " << login.username << std::endl;
 
                 LoginResult result = loginUser(userDb, login.username, login.password);
@@ -159,7 +162,8 @@ int main() {
                 nlohmann::json parsed = nlohmann::json::parse(rawText);
                 protocol::ClickMessage click = parsed.at("payload").get<protocol::ClickMessage>();
 
-                Controller::click(state, click.x, click.y);
+               
+                Controller::click(state, click.x, click.y, colorFromRole(it->second.role));
             } else {
                 std::cout << "unhandled type: " << type << std::endl;
             }
@@ -173,6 +177,7 @@ int main() {
         auto previousTime = std::chrono::steady_clock::now();
 
         while (true) {
+
             game_server.poll();
 
             auto now = std::chrono::steady_clock::now();
@@ -187,7 +192,6 @@ int main() {
             nlohmann::json envelope = protocol::wrapEnvelope("snapshot", payload);
             std::string rawText = envelope.dump();
 
-           
             for (const auto& entry : connectionInfos) {
                 if (!entry.second.loggedIn) continue;
 
