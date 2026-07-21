@@ -148,26 +148,7 @@ configure_opencv(chess_game)
 
 
 
-add_executable(sprite_demo
-    sprite_demo.cpp
-    view/img.cpp
-    view/SpriteLoader.cpp
-    view/Renderer.cpp
-    io/BoardParser.cpp
-    model/Board.cpp
-    model/Piece.cpp
-    model/Position.cpp
-    realtime/RealTimeArbiter.cpp
-    rules/PieceRules.cpp
-    engine/GameEngine.cpp
-rules/RuleEngine.cpp
-    engine/GameSnapshot.cpp
-)
-target_include_directories(sprite_demo PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/view)
-configure_opencv(sprite_demo)
 
-link_opencv(sprite_demo)
-copy_assets(sprite_demo)
 
 if(BUILD_TESTS)
     enable_testing()
@@ -252,6 +233,9 @@ add_executable(game_client
     view/img.cpp
     view/SpriteLoader.cpp
     view/Renderer.cpp
+    audio/AudioPlayer.cpp
+    audio/GameEventDetector.cpp
+    network/win32_ui/LoginWindow.cpp
 )
 target_include_directories(
     game_client
@@ -261,10 +245,11 @@ target_include_directories(
     ${WEBSOCKETPP_INCLUDE_DIR}
     ${ASIO_INCLUDE_DIR}
     ${NLOHMANN_JSON_INCLUDE_DIR}
+    
 )
 
 configure_opencv(game_client)
-
+target_link_libraries(game_client PRIVATE winmm)
 
 add_custom_command(TARGET game_client POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
