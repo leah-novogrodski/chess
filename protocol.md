@@ -1,3 +1,5 @@
+# Client <-> Server Protocol
+
 This document is the written contract for every WebSocket message exchanged
 between a client and the server. It defines message *shape* only - no
 send/receive wiring, no matchmaking/persistence logic, and no connection to
@@ -35,13 +37,14 @@ Authenticate a user before any room/matchmaking action.
 ```json
 {"type": "login", "payload": {"username": "alice", "password": "hunter2"}}
 ```
+
 ### `register`
 Create a new account with the given email/password. Does not log the new
 account in - a separate `login` message is still required afterward.
 
-| field      | type   |
+| field      | type   |
 |------------|--------|
-| `email`    | string |
+| `email`    | string |
 | `password` | string |
 
 ```json
@@ -109,17 +112,35 @@ spectator. Empty payload.
 ### `login_result`
 Reports whether a `login` attempt succeeded.
 
-| field     | type              | notes                                  |
-|-----------|-------------------|-----------------------------------------|
-| `success` | bool              |                                          |
-| `reason`  | string (optional) | present only when `success` is `false`  |
-| `rating`  | int (optional)    | present only when `success` is `true`   |
+| field     | type              | notes                                              |
+|-----------|-------------------|------------------------------------------------------|
+| `success` | bool              |                                                        |
+| `reason`  | string (optional) | always present; `null` when `success` is `true`       |
+| `rating`  | int (optional)    | always present; `null` when `success` is `false`      |
 
 ```json
-{"type": "login_result", "payload": {"success": true, "rating": 1200}}
+{"type": "login_result", "payload": {"success": true, "reason": null, "rating": 1200}}
 ```
 ```json
-{"type": "login_result", "payload": {"success": false, "reason": "invalid_credentials"}}
+{"type": "login_result", "payload": {"success": false, "reason": "invalid_credentials", "rating": null}}
+```
+
+### `register_result`
+Reports whether a `register` attempt succeeded. Unlike `login_result`,
+`reason` is always present (an empty string on success) rather than
+optional, since there's no second field (like `rating`) to distinguish the
+two cases by presence.
+
+| field     | type   | notes                                   |
+|-----------|--------|-------------------------------------------|
+| `success` | bool   |                                            |
+| `reason`  | string | empty on success; e.g. `"email_taken"` on failure |
+
+```json
+{"type": "register_result", "payload": {"success": true, "reason": ""}}
+```
+```json
+{"type": "register_result", "payload": {"success": false, "reason": "email_taken"}}
 ```
 
 ### `room_joined`
@@ -138,17 +159,17 @@ successful `quick_play`) and states its assigned role.
 ### `matchmaking_result`
 Reports the outcome of a `quick_play` request.
 
-| field     | type              | notes                                       |
-|-----------|-------------------|----------------------------------------------|
-| `success` | bool              |                                                |
-| `room_id` | string (optional) | present only when `success` is `true`         |
-| `reason`  | string (optional) | present only when `success` is `false`, e.g. `"no_opponent_found"` |
+| field     | type              | notes                                                              |
+|-----------|-------------------|-----------------------------------------------------------------------|
+| `success` | bool              |                                                                       |
+| `room_id` | string (optional) | always present; `null` when `success` is `false`                    |
+| `reason`  | string (optional) | always present; `null` when `success` is `true`, e.g. `"no_opponent_found"` |
 
 ```json
-{"type": "matchmaking_result", "payload": {"success": true, "room_id": "room_42"}}
+{"type": "matchmaking_result", "payload": {"success": true, "room_id": "room_42", "reason": null}}
 ```
 ```json
-{"type": "matchmaking_result", "payload": {"success": false, "reason": "no_opponent_found"}}
+{"type": "matchmaking_result", "payload": {"success": false, "room_id": null, "reason": "no_opponent_found"}}
 ```
 
 ### `snapshot`

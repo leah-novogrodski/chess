@@ -180,20 +180,6 @@ if(BUILD_TESTS)
         target_link_options(chess_tests PRIVATE --coverage)
     endif()
 endif()
-
-add_executable(ws_echo_server network/ws_echo_server.cpp)
-target_include_directories(ws_echo_server PRIVATE ${WEBSOCKETPP_INCLUDE_DIR} ${ASIO_INCLUDE_DIR})
-target_compile_definitions(ws_echo_server PRIVATE ASIO_STANDALONE _WEBSOCKETPP_CPP11_STL_ _WEBSOCKETPP_CPP11_THREAD_ _WIN32_WINNT=0x0601)
-target_link_libraries(ws_echo_server PRIVATE ws2_32 wsock32 mswsock)
-
-add_executable(ws_echo_client network/ws_echo_client.cpp)
-target_include_directories(ws_echo_client PRIVATE ${WEBSOCKETPP_INCLUDE_DIR} ${ASIO_INCLUDE_DIR})
-target_compile_definitions(ws_echo_client PRIVATE ASIO_STANDALONE _WEBSOCKETPP_CPP11_STL_ _WEBSOCKETPP_CPP11_THREAD_ _WIN32_WINNT=0x0601)
-target_link_libraries(ws_echo_client PRIVATE ws2_32 wsock32 mswsock)
-
-
-
-
 add_executable(game_server
     network/game_server.cpp
     network/protocol/JsonCodec.cpp
@@ -213,6 +199,7 @@ add_executable(game_server
     ${SQLITE3_SOURCE_DIR}/sqlite3.c
 )
 target_include_directories(game_server PRIVATE ${WEBSOCKETPP_INCLUDE_DIR} ${ASIO_INCLUDE_DIR} ${NLOHMANN_JSON_INCLUDE_DIR} ${SQLITE3_SOURCE_DIR} ${PICOSHA2_INCLUDE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+target_compile_definitions(game_server PRIVATE ASIO_STANDALONE)
 
 add_executable(game_client
     network/game_client.cpp
