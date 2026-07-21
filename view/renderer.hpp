@@ -5,9 +5,7 @@
 
 void drawPiece(Img& canvas, const PieceSnapshot& piece);
 
-
 void drawSelection(Img& canvas, const std::optional<Position>& selectedCell);
-
 
 Img renderFrame(const GameSnapshot& snapshot);
 

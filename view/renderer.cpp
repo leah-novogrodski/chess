@@ -1,16 +1,11 @@
 #include "Renderer.hpp"
-
 #include "SpriteLoader.hpp"
 #include "../rules/Config.hpp"
 
-
-namespace
-{
-    const cv::Scalar SELECTION_HIGHLIGHT_COLOR(0, 0, 255, 255);
-    const cv::Scalar GAME_OVER_TEXT_COLOR(0, 255, 255, 255);      // bright yellow, BGRA
-    const cv::Scalar GAME_OVER_BACKGROUND_COLOR(20, 20, 20, 255); // near-black, BGRA
-
-}
+const cv::Scalar SELECTION_HIGHLIGHT_COLOR(0, 0, 255, 255);
+const cv::Scalar GAME_OVER_TEXT_COLOR(0, 255, 255, 255);
+const cv::Scalar GAME_OVER_BACKGROUND_COLOR(20, 20, 20, 255);
+constexpr std::string_view BACKGROUND_IMG_BOUARD_PATH = "assets/background.jpg";
 
 void drawPiece(Img &canvas, const PieceSnapshot &piece)
 {
@@ -45,7 +40,7 @@ Img renderFrame(const GameSnapshot &snapshot)
     int height = snapshot.rows * config::CELL_SIZE;
 
     Img canvas;
-    canvas.read("assets/board.png", {width, height}, false);
+    canvas.read(std::string(BACKGROUND_IMG_BOUARD_PATH), {width, height}, false);
 
     for (const PieceSnapshot &piece : snapshot.pieces)
     {
@@ -71,7 +66,7 @@ void drawGameOver(Img &canvas, int canvasWidth, int canvasHeight)
     cv::Size textSize = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
 
     int textX = (canvasWidth - textSize.width) / 2;
-    int textY = (canvasHeight + textSize.height) / 2; // put_text's y is the text baseline
+    int textY = (canvasHeight + textSize.height) / 2;
 
     const int paddingX = 24;
     const int paddingY = 16;
