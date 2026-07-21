@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(chess_game CXX C)
 
-
 include(FetchContent)
 
 if(POLICY CMP0169)
@@ -146,10 +145,6 @@ add_executable(chess_game
 target_include_directories(chess_game PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/view)
 configure_opencv(chess_game)
 
-
-
-
-
 if(BUILD_TESTS)
     enable_testing()
 
@@ -271,12 +266,5 @@ foreach(ws_target protocol_demo_server protocol_demo_client game_server game_cli
     endif()
 endforeach()
 
-add_executable(persistence_demo
-    persistence/persistence_demo.cpp
-    persistence/Database.cpp
-    persistence/UserRepository.cpp
-     ${SQLITE3_SOURCE_DIR}/sqlite3.c
-)
-target_include_directories(persistence_demo PRIVATE  ${SQLITE3_SOURCE_DIR} ${PICOSHA2_INCLUDE_DIR})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
