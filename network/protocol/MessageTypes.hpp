@@ -1,32 +1,26 @@
 #pragma once
 
-namespace protocol {
+namespace protocol
+{
 
-// One flat enum for both directions, not a ClientMessageType/ServerMessageType
-// split: the wire envelope's "type" field is a single string namespace
-// regardless of who sent it (see PROTOCOL.md), so a single type -> handler
-// lookup table (in whichever later step actually dispatches messages) only
-// needs one enum to key off of. Grouped by direction here for readability
-// only - the boundary carries no other special meaning.
-enum class MessageType {
-    // Client -> Server
-    Login,
-    Register,
-    CreateRoom,
-    JoinRoom,
-    QuickPlay,
-    Click,
-    Leave,
+    enum class MessageType
+    {
+        Login,
+        Register,
+        CreateRoom,
+        JoinRoom,
+        QuickPlay,
+        Click,
+        Leave,
 
-    // Server -> Client
-    LoginResult,
-    RegisterResult,
-    RoomJoined,
-    MatchmakingResult,
-    Snapshot,
-    OpponentDisconnected,
-    GameOverResult,
-    Error,
-};
+        LoginResult,
+        RegisterResult,
+        RoomJoined,
+        MatchmakingResult,
+        Snapshot,
+        OpponentDisconnected,
+        GameOverResult,
+        Error,
+    };
 
 }

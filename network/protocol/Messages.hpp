@@ -89,7 +89,7 @@ struct OpponentDisconnectedMessage {
 };
 
 struct GameOverResultMessage {
-    std::optional<std::string> winner;   // "white" | "black" | nullopt for a draw
+    std::optional<std::string> winner;  
     std::string reason;
 };
 
